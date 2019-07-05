@@ -20,6 +20,11 @@ node {
   }
 
   stage('Build Image') {
+    // This is an ugly hack - we have to remove the buildconfig each time
+    // because we want to import a fresh Dockerfile each time. oc start-build
+    // doesn't let us do it while letting us import the compiled binary from
+    // the builder image at the same time.
+    //
     sh "ocdelete ${devProject} bc/${appName} is/${appName}"
     sh "oc new-build -n ${devProject} --name ${appName} --source-image=${appName}-builder --source-image-path=/opt/app-root/output/${appName}:. --dockerfile='-' --allow-missing-imagestream-tags=true --strategy=docker < Dockerfile"
     sleep 3
