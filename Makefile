@@ -22,8 +22,8 @@ ROUTING_SUFFIX=$(shell $(BASE)/scripts/getroutingsuffix)
 #ROUTING_SUFFIX=apps.$(GUID).openshiftworkshop.com
 
 
-# Uncomment this block if you are installing it on OPENTLC. Set GUID to a
-# which is appropriate for your environment. Set PROJ_PREFIX to your OPENTLC
+# Uncomment this block if you are installing it on OPENTLC. Set GUID to a value
+# that is appropriate for your environment. Set PROJ_PREFIX to your OPENTLC
 # user ID. This ensures that the project names are unique in the OPENTLC
 # shared environment.
 #
