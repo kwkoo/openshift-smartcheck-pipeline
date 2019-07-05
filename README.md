@@ -9,7 +9,11 @@ You can setup Smart Check by following the instructions [here](https://github.co
 
 You need to have the `oc` binary before running the install. You will also need to have run the `oc login` command to log into the OpenShift API.
 
-Edit the `Makefile` and set the variables to the necessary values. Once you're ready, start the install by running `make`.
+Edit the `Makefile` and set the variables to the necessary values. At a minimum, you will need to set the `SMARTCHECK_URL`, `SMARTCHECK_USER`, and `SMARTCHECK_PASSWORD` variables.
+
+If you are deploying this to RHPDS and are running this on the bastion, the rest of the variables should be set automatically. The variables should also be set automatically if you are deploying this to minishift. If you are deploying this on some other setup, you may need to manually set the `ROUTING_SUFFIX` to the appropriate value.
+
+Once you're ready, start the install by running `make`. You'll get a chance to verify the variable values before proceeding with the actual install.
 
 After the installation is done, 2 projects should be created - `development` and `production`.
 
