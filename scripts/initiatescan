@@ -1,0 +1,59 @@
+#!/bin/bash
+
+if [ $# -lt 6 ]; then
+  echo "Usage: $0 SMARTCHECK_SERVER_URL SMARTCHECK_USERNAME SMARTCHECK_PASSWORD SCAN_NAME SCAN_REPO SCAN_TAG"
+  exit 1
+fi
+
+SERVER="$1"
+SC_USERNAME="$2"
+SC_PASSWORD="$3"
+
+SCAN_NAME="$4"
+SCAN_REGISTRY="docker-registry.default.svc:5000"
+SCAN_REPO="$5"
+SCAN_TAG="$6"
+
+# Create a session
+#
+CURL_OUTPUT=$(curl \
+  -k \
+  -H 'Content-Type: application/json' \
+  -X POST \
+  -d '{"user": {"userID": "'"$SC_USERNAME"'", "password": "'"$SC_PASSWORD"'"}}' \
+  ${SERVER}/api/sessions 2>/dev/null)
+
+
+SESSION_ID=$(echo -n $CURL_OUTPUT | sed -e 's/.*"\/api\/sessions\/\([^"]*\).*/\1/')
+TOKEN=$(echo -n $CURL_OUTPUT | sed -e 's/.*"token": *"\([^"]*\).*/\1/')
+
+if [ "$SESSION_ID" = "$CURL_OUTPUT" -o "$TOKEN" = "$CURL_OUTPUT" ]; then
+  echo "could not get session ID or token"
+  exit 1
+fi
+
+
+# Initiate scan
+#
+CURL_OUTPUT=$(curl \
+  -k \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"'"$SCAN_NAME"'", "source":{"type": "docker", "registry": "'"$SCAN_REGISTRY"'", "repository": "'"$SCAN_REPO"'", "tag": "'"$SCAN_TAG"'", "credentials": {"username": "jenkins", "password": "'"$(oc whoami -t)"'"}, "insecureSkipVerify": true}}' \
+  ${SERVER}/api/scans 2>/dev/null)
+
+
+SCAN_ID=$(echo -n $CURL_OUTPUT | sed -e 's/.*"id": *"\([^"]*\).*/\1/')
+
+if [ "$SCAN_ID" = "$CURL_OUTPUT" ]; then
+  echo "could not get scan ID"
+  exit 1
+fi
+
+echo -n "$SCAN_ID"
+
+
+# Destroy session
+#
+curl -k -X DELETE -H "Authorization: Bearer $TOKEN" ${SERVER}/api/sessions/${SESSION_ID} 1>/dev/null 2>/dev/null

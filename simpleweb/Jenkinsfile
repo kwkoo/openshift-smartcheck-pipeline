@@ -1,0 +1,53 @@
+#!groovy
+
+node {
+  def appName = "simpleweb"
+  def devProject = "development"
+  def prodProject = "production"
+  def buildImage = "docker.io/centos/go-toolset-7-centos7"
+  def smartcheck_url = "SMARTCHECK_URL"
+  def smartcheck_username = "SMARTCHECK_USERNAME"
+  def smartcheck_password = "SMARTCHECK_PASSWORD"
+  def scanID
+
+
+  stage('Checkout Source') {
+    checkout scm
+  }
+
+  stage('Compile Source') {
+    sh "oc start-build -n ${devProject} --from-dir=. -w ${appName}-builder"
+  }
+
+  stage('Build Image') {
+    sh "ocdelete ${devProject} bc/${appName} is/${appName}"
+    sh "oc new-build -n ${devProject} --name ${appName} --source-image=${appName}-builder --source-image-path=/opt/app-root/output/${appName}:. --dockerfile='-' --allow-missing-imagestream-tags=true --strategy=docker < Dockerfile"
+    sleep 3
+    sh "oc logs -n ${devProject} -f build/${appName}-1"
+  }
+
+  stage('Scan Image') {
+    scanID = sh (script: "initiatescan ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} '${appName} scan' ${devProject}/${appName} latest", returnStdout: true)
+  }
+
+  stage('Wait for Scan Completion') {
+    sh "waitforscan ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} ${scanID}"
+  }
+
+  stage('Check for Vulnerabilities') {
+    def results = sh (script: "scanfindings ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} ${scanID}", returnStdout: true)
+    def parsedResults = readJSON text: results
+    if (parsedResults.findings.vulnerabilities.unresolved.high > 0) {
+      error("${parsedResults.findings.vulnerabilities.unresolved.high} high priority vulnerabilities found")
+    }
+  }
+
+  stage('Integration Test') {
+    sh "wget --retry-connrefused --tries=120 --waitretry=1 -q http://${appName}:8080/health -O /dev/null"
+  }
+
+  stage("Promote to Prod") {
+    input message: "Approve Promotion to Prod?", ok: "Promote"
+    sh "oc tag ${devProject}/${appName}:latest ${prodProject}/${appName}:latest"
+  }
+}

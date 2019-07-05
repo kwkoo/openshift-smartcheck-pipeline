@@ -1,0 +1,58 @@
+#!/bin/bash
+
+if [ $# -lt 4 ]; then
+  echo "Usage: $0 SMARTCHECK_SERVER_URL SMARTCHECK_USERNAME SMARTCHECK_PASSWORD SCAN_ID"
+  exit 1
+fi
+
+SERVER="$1"
+SC_USERNAME="$2"
+SC_PASSWORD="$3"
+
+SCAN_ID="$4"
+
+# Create a session
+#
+CURL_OUTPUT=$(curl \
+  -k \
+  -H 'Content-Type: application/json' \
+  -X POST \
+  -d '{"user": {"userID": "'"$SC_USERNAME"'", "password": "'"$SC_PASSWORD"'"}}' \
+  ${SERVER}/api/sessions 2>/dev/null)
+
+
+SESSION_ID=$(echo -n $CURL_OUTPUT | sed -e 's/.*"\/api\/sessions\/\([^"]*\).*/\1/')
+TOKEN=$(echo -n $CURL_OUTPUT | sed -e 's/.*"token": *"\([^"]*\).*/\1/')
+
+if [ "$SESSION_ID" = "$CURL_OUTPUT" -o "$TOKEN" = "$CURL_OUTPUT" ]; then
+  echo "could not get session ID or token"
+  exit 1
+fi
+
+
+# Check scan status
+#
+echo -n "Waiting for scan to complete..."
+while true; do
+  CURL_OUTPUT=$(curl \
+    -k \
+    -H "Authorization: Bearer $TOKEN" \
+    ${SERVER}/api/scans/${SCAN_ID} 2>/dev/null)
+  COMPLETED=$(echo -n $CURL_OUTPUT | sed -e 's/.*"completed": *"\([^"]*\).*/\1/')
+
+  if [ "${#COMPLETED}" -eq "20" ]; then
+    echo $COMPLETED
+    break
+  fi
+
+  echo -n "."
+  sleep 5
+done
+
+
+#echo "$CURL_OUTPUT"
+
+
+# Destroy session
+#
+curl -k -X DELETE -H "Authorization: Bearer $TOKEN" ${SERVER}/api/sessions/${SESSION_ID} 1>/dev/null 2>/dev/null

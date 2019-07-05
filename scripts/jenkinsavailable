@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 PROJECT"
+  exit 1
+fi
+
+PROJECTNAME=$1
+
+POD_READY="false"
+echo -n "Checking if jenkins POD is available..."
+while [ -z "$POD_NAME" ]; do
+   sleep 5
+   POD_NAME="$(oc get pods --no-headers -o custom-columns=NAME:.metadata.name -n $PROJECTNAME | grep jenkins- | grep -v deploy )"
+   echo -n "."
+done
+
+echo
+
+STATUS=""
+echo -n "Checking if $POD_NAME is running..."
+while [ "$STATUS" != "Running" ]; do
+  sleep 5
+  STATUS="$(oc get -n $PROJECTNAME po/${POD_NAME} --template='{{.status.phase}}')"
+  echo -n "."
+done
+
+echo "done"

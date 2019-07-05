@@ -1,0 +1,13 @@
+#!/bin/bash
+
+PROJECT=$1
+shift
+
+while (( "$#" )); do
+  RESOURCE=$1
+  oc get -n $PROJECT $1 1>/dev/null 2>/dev/null
+  if [ "$?" -eq "0" ]; then
+    oc delete -n $PROJECT $RESOURCE 1>/dev/null 2>/dev/null
+  fi
+  shift
+done

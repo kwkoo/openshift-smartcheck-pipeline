@@ -1,0 +1,14 @@
+#!/bin/bash
+
+APPNAME=simpleweb
+
+set -e
+
+mkdir -p /opt/app-root/output/
+mkdir -p /opt/app-root/src/go/src/
+mv /tmp/src/* /opt/app-root/src/go/src/
+cd /opt/app-root/src/go/src/${APPNAME}/
+
+echo "Starting build..."
+CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /opt/app-root/output/${APPNAME} .
+echo "Build completed"
