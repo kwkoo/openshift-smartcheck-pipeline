@@ -15,15 +15,27 @@ ROUTING_SUFFIX=$(shell $(BASE)/scripts/getroutingsuffix)
 
 
 # Uncomment this block if you are installing it on RHPDS but are not running
-# this on the bastion.
+# this on the bastion. Be sure to set GUID to a value which is appropriate for
+# your environment.
 #
 #GUID=XXX-XXXX
 #ROUTING_SUFFIX=apps.$(GUID).openshiftworkshop.com
 
 
+# Uncomment this block if you are installing it on OPENTLC. Set GUID to a
+# which is appropriate for your environment. Set PROJ_PREFIX to your OPENTLC
+# user ID. This ensures that the project names are unique in the OPENTLC
+# shared environment.
+#
+#GUID=naXXX
+#PROJ_PREFIX=XXXX
+#ROUTING_SUFFIX=apps.$(GUID).openshift.opentlc.com
+#DEV_PROJECT=$(PROJ_PREFIX)-dev
+#PROD_PROJECT=$(PROJ_PREFIX)-prod
+
+
 .PHONY: printvar deployall deploygogs waitforgogs setupgogs setupdev \
-deployjenkins setupprod clean console gogs jenkins \
-info loopinfo endpoint
+deployjenkins setupprod clean console gogs jenkins curl loop src
 
 deployall: printvar setupgogs setupdev deployjenkins setupprod
 	@echo "Done"
@@ -78,6 +90,8 @@ setupgogs: waitforgogs
 	@oc rsh dc/postgresql-gogs /bin/sh -c 'LD_LIBRARY_PATH=/opt/rh/rh-postgresql10/root/usr/lib64 /opt/rh/rh-postgresql10/root/usr/bin/psql -U gogs -d gogs -c "INSERT INTO public.user (lower_name,name,email,passwd,rands,salt,max_repo_creation,avatar,avatar_email,num_repos) VALUES ('"'$(GOGS_USER)','$(GOGS_USER)','$(GOGS_USER)@gogs,com','40d76f42148716323d6b398f835438c7aec43f41f3ca1ea6e021192f993e1dc4acd95f36264ffe16812a954ba57492f4c107','konHCHTY7M','9XecGGR6cW',-1,'e4eba08430c43ef06e425e2e9b7a740f','$(GOGS_USER)@gogs.com',1"')"'
 
 	@cp $(BASE)/$(REPO_DIR)/Jenkinsfile /tmp/
+	@sed -i -e 's|devProject = "[^"]*|devProject = "$(DEV_PROJECT)|' /tmp/Jenkinsfile
+	@sed -i -e 's|prodProject = "[^"]*|prodProject = "$(PROD_PROJECT)|' /tmp/Jenkinsfile
 	@sed -i -e 's|smartcheck_url = "[^"]*|smartcheck_url = "$(SMARTCHECK_URL)|' /tmp/Jenkinsfile
 	@sed -i -e 's|smartcheck_username = "[^"]*|smartcheck_username = "$(SMARTCHECK_USER)|' /tmp/Jenkinsfile
 	@sed -i -e 's|smartcheck_password = "[^"]*|smartcheck_password = "$(SMARTCHECK_PASSWORD)|' /tmp/Jenkinsfile
