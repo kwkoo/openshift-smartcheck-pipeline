@@ -48,7 +48,7 @@ help:
 	@echo "gogs - cart repo in Gogs."
 	@echo "jenkins - Jenkins web UI."
 	@echo "curl - Send a curl request to the production web service."
-	@echo "loopinfo - Continually perform a curl request to the production web service."
+	@echo "loop - Continually perform a curl request to the production web service."
 	@echo "src - main.go in Gogs."
 
 printvar:
