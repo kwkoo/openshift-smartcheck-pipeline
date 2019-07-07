@@ -90,12 +90,12 @@ setupgogs: waitforgogs
 	@oc rsh dc/postgresql-gogs /bin/sh -c 'LD_LIBRARY_PATH=/opt/rh/rh-postgresql10/root/usr/lib64 /opt/rh/rh-postgresql10/root/usr/bin/psql -U gogs -d gogs -c "INSERT INTO public.user (lower_name,name,email,passwd,rands,salt,max_repo_creation,avatar,avatar_email,num_repos) VALUES ('"'$(GOGS_USER)','$(GOGS_USER)','$(GOGS_USER)@gogs,com','40d76f42148716323d6b398f835438c7aec43f41f3ca1ea6e021192f993e1dc4acd95f36264ffe16812a954ba57492f4c107','konHCHTY7M','9XecGGR6cW',-1,'e4eba08430c43ef06e425e2e9b7a740f','$(GOGS_USER)@gogs.com',1"')"'
 
 	@cp $(BASE)/$(REPO_DIR)/Jenkinsfile /tmp/
-	@sed -i -e 's|APP_NAME = "[^"]*|devProject = "$(REPO_DIR)|' /tmp/Jenkinsfile
-	@sed -i -e 's|DEV_PROJECT = "[^"]*|devProject = "$(DEV_PROJECT)|' /tmp/Jenkinsfile
-	@sed -i -e 's|PROD_PROJECT = "[^"]*|prodProject = "$(PROD_PROJECT)|' /tmp/Jenkinsfile
-	@sed -i -e 's|SMARTCHECK_URL = "[^"]*|smartcheck_url = "$(SMARTCHECK_URL)|' /tmp/Jenkinsfile
-	@sed -i -e 's|SMARTCHECK_USERNAME = "[^"]*|smartcheck_username = "$(SMARTCHECK_USER)|' /tmp/Jenkinsfile
-	@sed -i -e 's|SMARTCHECK_PASSWORD = "[^"]*|smartcheck_password = "$(SMARTCHECK_PASSWORD)|' /tmp/Jenkinsfile
+	@sed -i -e 's|APP_NAME = "[^"]*|APP_NAME = "$(REPO_DIR)|' /tmp/Jenkinsfile
+	@sed -i -e 's|DEV_PROJECT = "[^"]*|DEV_PROJECT = "$(DEV_PROJECT)|' /tmp/Jenkinsfile
+	@sed -i -e 's|PROD_PROJECT = "[^"]*|PROD_PROJECT = "$(PROD_PROJECT)|' /tmp/Jenkinsfile
+	@sed -i -e 's|SMARTCHECK_URL = "[^"]*|SMARTCHECK_URL = "$(SMARTCHECK_URL)|' /tmp/Jenkinsfile
+	@sed -i -e 's|SMARTCHECK_USERNAME = "[^"]*|SMARTCHECK_USERNAME = "$(SMARTCHECK_USER)|' /tmp/Jenkinsfile
+	@sed -i -e 's|SMARTCHECK_PASSWORD = "[^"]*|SMARTCHECK_PASSWORD = "$(SMARTCHECK_PASSWORD)|' /tmp/Jenkinsfile
 	@cp -f /tmp/Jenkinsfile $(BASE)/$(REPO_DIR)/
 	@rm -f /tmp/Jenkinsfile
 
@@ -170,7 +170,7 @@ gogs:
 
 
 jenkins:
-	$(eval URL="https://jenkins-$(DEV_PROJECT).$(ROUTING_SUFFIX)")
+	$(eval URL="https://jenkins-$(DEV_PROJECT).$(ROUTING_SUFFIX)/blue/organizations/jenkins/$(REPO_DIR)/activity")
 	@if [ "$(shell uname)" = "Darwin" ]; then \
 	  open ${URL}; \
 	else \
