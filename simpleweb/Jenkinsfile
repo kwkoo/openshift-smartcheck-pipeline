@@ -25,7 +25,7 @@ pipeline {
     stage('Build Image') {
       steps {
         // Overwrite second stage buildconfig with Dockerfile (if it changed)
-        sh "/var/lib/jenkins/scripts/patchbcwithdockerfile ${env.APP_NAME} Dockerfile"
+        sh "/var/lib/jenkins/scripts/patchbcwithdockerfile ${env.DEV_PROJECT} ${env.APP_NAME} Dockerfile"
         script {
           openshift.withCluster() {
             openshift.withProject(env.DEV_PROJECT) {
