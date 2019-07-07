@@ -51,6 +51,7 @@ pipeline {
       steps {
         script {
           def results = sh (script: "/var/lib/jenkins/scripts/scanfindings ${env.SMARTCHECK_URL} ${env.SMARTCHECK_USERNAME} ${env.SMARTCHECK_PASSWORD} ${env.SCAN_ID}", returnStdout: true)
+          echo results
           def parsedResults = readJSON text: results
           if (parsedResults.findings.vulnerabilities.unresolved.high > 0) {
             error("${parsedResults.findings.vulnerabilities.unresolved.high} high priority vulnerabilities found")
