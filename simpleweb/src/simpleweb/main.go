@@ -10,11 +10,23 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	message := "Hello!"
+
+	w.Header().Set("Content-Type", "text/plain")
+
+	// do not log requests from probes
+	//
+	if strings.HasPrefix(r.Header.Get("User-Agent"), "kube-probe") {
+		fmt.Fprint(w, "OK")
+		return
+	}
+
 	log.Print("Request for URI: ", r.URL.Path)
 	log.Print("Method: ", r.Method)
 	//for key, value := range r.Header {
@@ -23,12 +35,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	dump, _ := httputil.DumpRequest(r, true)
 	log.Printf("%q", dump)
 
-	message := "Hello!"
 	if len(os.Getenv("MESSAGE")) > 0 {
 		message = os.Getenv("MESSAGE")
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
 	fmt.Fprintf(w, "%s: %s\n", os.Getenv("HOSTNAME"), message)
 }
 
