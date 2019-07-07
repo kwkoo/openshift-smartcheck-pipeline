@@ -125,6 +125,7 @@ deployjenkins:
 	@oc rsh -n $(DEV_PROJECT) dc/jenkins mkdir -p /var/lib/jenkins/jobs/$(JENKINS_JOB_NAME)
 	@oc cp -n $(DEV_PROJECT) /tmp/jenkins-job-work.xml `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/jobs/$(JENKINS_JOB_NAME)/config.xml
 	@rm -f /tmp/jenkins-job-work.xml
+	@oc exec -n -n $(DEV_PROJECT) `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy` -- mkdir -p /var/lib/jenkins/scripts
 	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/initiatescan `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/scripts/
 	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/waitforscan `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/scripts/
 	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/scanfindings `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/scripts/

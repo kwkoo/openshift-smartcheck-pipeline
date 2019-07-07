@@ -21,20 +21,20 @@ node {
 
   stage('Build Image') {
     // Overwrite second stage buildconfig with Dockerfile (if it changed)
-    sh "patchbcwithdockerfile ${appName} Dockerfile"
+    sh "/var/lib/jenkins/scripts/patchbcwithdockerfile ${appName} Dockerfile"
     sh "oc start-build -n ${devProject} ${appName} --follow --wait"
   }
 
   stage('Scan Image') {
-    scanID = sh (script: "initiatescan ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} '${appName} scan' ${devProject}/${appName} latest", returnStdout: true)
+    scanID = sh (script: "/var/lib/jenkins/scripts/initiatescan ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} '${appName} scan' ${devProject}/${appName} latest", returnStdout: true)
   }
 
   stage('Wait for Scan Completion') {
-    sh "waitforscan ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} ${scanID}"
+    sh "/var/lib/jenkins/scripts/waitforscan ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} ${scanID}"
   }
 
   stage('Check for Vulnerabilities') {
-    def results = sh (script: "scanfindings ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} ${scanID}", returnStdout: true)
+    def results = sh (script: "/var/lib/jenkins/scripts/scanfindings ${smartcheck_url} ${smartcheck_username} ${smartcheck_password} ${scanID}", returnStdout: true)
     def parsedResults = readJSON text: results
     if (parsedResults.findings.vulnerabilities.unresolved.high > 0) {
       error("${parsedResults.findings.vulnerabilities.unresolved.high} high priority vulnerabilities found")
