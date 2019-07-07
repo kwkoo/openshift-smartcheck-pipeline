@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 BUILDCONFIG_NAME PATH_TO_DOCKERFILE"
+  exit 1
+fi
+
+BC_NAME=$1
+DOCKERFILE=$2
+
+oc patch bc $BC_NAME --type json --patch '[{"op":"remove", "path":"/spec/strategy/dockerStrategy/from"}]' 1>/dev/null 2>/dev/null
+
+set -e
+
+PATCH=$(cat $DOCKERFILE | sed -e 's/"/\\"/g;s/$/\\n/g' | tr -d '\n')
+
+oc patch bc $BC_NAME --patch '{"spec":{"source":{"dockerfile":"'"$PATCH"'"}}}'
+

@@ -147,3 +147,43 @@ spec:
     deploymentconfig: simpleweb
   sessionAffinity: None
   type: ClusterIP
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    build: simpleweb
+  name: simpleweb
+spec:
+  failedBuildsHistoryLimit: 5
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: simpleweb:latest
+  postCommit: {}
+  resources: {}
+  runPolicy: Serial
+  source:
+    dockerfile: |
+      FROM centos:7
+      LABEL maintainer="kkoo@redhat.com"
+
+      USER 1000
+      EXPOSE 8080
+      ENTRYPOINT ["/simpleweb"]
+
+      COPY simpleweb /
+    images:
+    - as: null
+      from:
+        kind: ImageStreamTag
+        name: simpleweb-builder:latest
+        namespace: development
+      paths:
+      - destinationDir: .
+        sourcePath: /opt/app-root/output/simpleweb
+    type: Dockerfile
+  strategy:
+    type: Docker
+  successfulBuildsHistoryLimit: 5

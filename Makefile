@@ -125,10 +125,10 @@ deployjenkins:
 	@oc rsh -n $(DEV_PROJECT) dc/jenkins mkdir -p /var/lib/jenkins/jobs/$(JENKINS_JOB_NAME)
 	@oc cp -n $(DEV_PROJECT) /tmp/jenkins-job-work.xml `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/jobs/$(JENKINS_JOB_NAME)/config.xml
 	@rm -f /tmp/jenkins-job-work.xml
-	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/initiatescan `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/usr/bin/
-	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/waitforscan `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/usr/bin/
-	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/scanfindings `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/usr/bin/
-	@oc cp -n $(DEV_PROJECT) scripts/ocdelete `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/usr/bin/
+	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/initiatescan `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/scripts/
+	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/waitforscan `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/scripts/
+	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/scanfindings `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/scripts/
+	@oc cp -n $(DEV_PROJECT) $(BASE)/scripts/patchbcwithdockerfile `oc get -n $(DEV_PROJECT) pods -o custom-columns=:.metadata.name | grep jenkins | grep -v deploy`:/var/lib/jenkins/scripts/
 
 
 setupprod:
@@ -159,7 +159,7 @@ console:
 
 
 gogs:
-	$(eval URL="http://$(GOGS_APP_NAME)-$(DEV_PROJECT).$(ROUTING_SUFFIX)/$(REPO_URI")
+	$(eval URL="http://$(GOGS_APP_NAME)-$(DEV_PROJECT).$(ROUTING_SUFFIX)/$(REPO_URI)")
 	@if [ "$(shell uname)" = "Darwin" ]; then \
 	  open ${URL}; \
 	else \
