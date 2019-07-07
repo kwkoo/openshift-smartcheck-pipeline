@@ -9,6 +9,6 @@ mkdir -p /opt/app-root/src/go/src/
 mv /tmp/src/* /opt/app-root/src/go/src/
 cd /opt/app-root/src/go/src/${APPNAME}/
 
-echo "Starting build..."
+echo "Compiling Go app..."
 CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /opt/app-root/output/${APPNAME} .
 echo "Build completed"
