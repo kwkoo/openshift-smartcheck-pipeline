@@ -104,7 +104,7 @@ setupgogs: waitforgogs
 setupdev:
 	@echo "Setting up development project..."
 	@$(BASE)/scripts/switchtoproject $(DEV_PROJECT)
-	oc create -f $(BASE)/yaml/dev.yaml
+	@oc create -f $(BASE)/yaml/dev.yaml
 
 
 deployjenkins:
