@@ -94,7 +94,12 @@ setupgogs: waitforgogs
 setupdev:
 	@echo "Setting up development project..."
 	@$(BASE)/scripts/switchtoproject $(DEV_PROJECT)
-	@oc create -f $(BASE)/yaml/dev.yaml
+	@oc process \
+	  -f $(BASE)/yaml/dev-template.yaml \
+	  --local \
+	  -p APP_NAME=$(REPO_DIR) \
+	| \
+	  oc create -f -
 
 
 deployjenkins:
@@ -130,7 +135,12 @@ deployjenkins:
 setupprod:
 	@echo "Setting up production project..."
 	@$(BASE)/scripts/switchtoproject $(PROD_PROJECT)
-	@oc create -f $(BASE)/yaml/prod.yaml
+	@oc process \
+	  -f $(BASE)/yaml/prod-template.yaml \
+	  --local \
+	  -p APP_NAME=$(REPO_DIR) \
+	| \
+	  oc create -f -
 
 	# Let the jenkins user promote images to the production project.
 	@oc policy add-role-to-user \

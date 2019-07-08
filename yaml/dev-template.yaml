@@ -1,0 +1,193 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: dev-template
+objects:
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      build: ${APP_NAME}-builder
+    name: ${APP_NAME}-builder
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APP_NAME}-builder:latest
+    runPolicy: Serial
+    source:
+      contextDir: src
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: go-toolset-7-centos7:latest
+      type: Source
+    successfulBuildsHistoryLimit: 5
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    labels:
+      build: ${APP_NAME}-builder
+    name: go-toolset-7-centos7
+  spec:
+    tags:
+    - annotations:
+        openshift.io/imported-from: docker.io/centos/go-toolset-7-centos7
+      from:
+        kind: DockerImage
+        name: docker.io/centos/go-toolset-7-centos7
+      name: latest
+      referencePolicy:
+        type: Source
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    labels:
+      build: ${APP_NAME}-builder
+    name: ${APP_NAME}-builder
+  spec:
+    lookupPolicy:
+      local: false
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    strategy:
+      activeDeadlineSeconds: 21600
+    template:
+      metadata:
+        annotations:
+        labels:
+          app: ${APP_NAME}
+          deploymentconfig: ${APP_NAME}
+      spec:
+        containers:
+        - livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: ${APP_NAME}
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APP_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APP_NAME}:latest
+      type: ImageChange
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+    labels:
+      build: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - from:
+        kind: DockerImage
+        name: ${APP_NAME}:latest
+      importPolicy: {}
+      name: latest
+      referencePolicy:
+        type: Source
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      build: ${APP_NAME}
+    name: ${APP_NAME}
+  spec:
+    failedBuildsHistoryLimit: 5
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APP_NAME}:latest
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      dockerfile: |
+        FROM centos:7
+        LABEL maintainer="kkoo@redhat.com"
+  
+        USER 1000
+        EXPOSE 8080
+        ENTRYPOINT ["/${APP_NAME}"]
+  
+        COPY ${APP_NAME} /
+      images:
+      - as: null
+        from:
+          kind: ImageStreamTag
+          name: ${APP_NAME}-builder:latest
+          namespace: development
+        paths:
+        - destinationDir: .
+          sourcePath: /opt/app-root/output/${APP_NAME}
+      type: Dockerfile
+    strategy:
+      type: Docker
+    successfulBuildsHistoryLimit: 5
+parameters:
+- description: The name of the application to deploy.
+  displayName: Application Name
+  name: APP_NAME
+  required: true
