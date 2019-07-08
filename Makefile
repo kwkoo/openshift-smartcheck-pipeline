@@ -88,17 +88,6 @@ waitforgogs: deploygogs
 setupgogs: waitforgogs
 	@echo "Creating gogs user..."
 	@oc rsh dc/postgresql-gogs /bin/sh -c 'LD_LIBRARY_PATH=/opt/rh/rh-postgresql10/root/usr/lib64 /opt/rh/rh-postgresql10/root/usr/bin/psql -U gogs -d gogs -c "INSERT INTO public.user (lower_name,name,email,passwd,rands,salt,max_repo_creation,avatar,avatar_email,num_repos) VALUES ('"'$(GOGS_USER)','$(GOGS_USER)','$(GOGS_USER)@gogs,com','40d76f42148716323d6b398f835438c7aec43f41f3ca1ea6e021192f993e1dc4acd95f36264ffe16812a954ba57492f4c107','konHCHTY7M','9XecGGR6cW',-1,'e4eba08430c43ef06e425e2e9b7a740f','$(GOGS_USER)@gogs.com',1"')"'
-
-	@cp $(BASE)/$(REPO_DIR)/Jenkinsfile /tmp/
-	@sed -i -e 's|APP_NAME = "[^"]*|APP_NAME = "$(REPO_DIR)|' /tmp/Jenkinsfile
-	@sed -i -e 's|DEV_PROJECT = "[^"]*|DEV_PROJECT = "$(DEV_PROJECT)|' /tmp/Jenkinsfile
-	@sed -i -e 's|PROD_PROJECT = "[^"]*|PROD_PROJECT = "$(PROD_PROJECT)|' /tmp/Jenkinsfile
-	@sed -i -e 's|SMARTCHECK_URL = "[^"]*|SMARTCHECK_URL = "$(SMARTCHECK_URL)|' /tmp/Jenkinsfile
-	@sed -i -e 's|SMARTCHECK_USERNAME = "[^"]*|SMARTCHECK_USERNAME = "$(SMARTCHECK_USER)|' /tmp/Jenkinsfile
-	@sed -i -e 's|SMARTCHECK_PASSWORD = "[^"]*|SMARTCHECK_PASSWORD = "$(SMARTCHECK_PASSWORD)|' /tmp/Jenkinsfile
-	@cp -f /tmp/Jenkinsfile $(BASE)/$(REPO_DIR)/
-	@rm -f /tmp/Jenkinsfile
-
 	@$(BASE)/scripts/pushtogogs $(DEV_PROJECT) $(GOGS_USER) gogs $(REPO_URI) $(BASE)/$(REPO_DIR) $(REPO_DIR) $(REPO_DESCRIPTION)
 
 
@@ -114,7 +103,12 @@ deployjenkins:
 	@oc new-app jenkins-persistent \
 	  -n $(DEV_PROJECT) \
 	  -p MEMORY_LIMIT=4Gi \
-	  -e SMARTCHECK_URL=$(SMARTCHECK_URL)
+	  -e APP_NAME=$(REPO_DIR) \
+	  -e DEV_PROJECT=$(DEV_PROJECT) \
+	  -e PROD_PROJECT=$(PROD_PROJECT) \
+	  -e SMARTCHECK_URL=$(SMARTCHECK_URL) \
+	  -e SMARTCHECK_USERNAME=$(SMARTCHECK_USER) \
+	  -e SMARTCHECK_PASSWORD=$(SMARTCHECK_PASSWORD)
 
 	@cp $(BASE)/jenkins-job.xml /tmp/jenkins-job-work.xml
 	@echo "Update the jenkins template file with the actual demo environment settings..."
